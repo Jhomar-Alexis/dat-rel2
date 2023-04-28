@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Gráficas en tiempo real</title>
+  </head>
+  <body style="display: grid; justify-content: center; background-color: black">
+    <br />
+    <h1
+      style="
+        color: white;
+        text-align: center;
+        font-weight: bold;
+        font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        letter-spacing: 3px;
+        font-size: 50px;
+      "
+    >
+      DATOS EN TIEMPO REAL
+    </h1>
+    <div
+      id="wave-chart"
+      style="width: 1000px; height: 500px; background: greenyellow"
+    ></div>
+    <br />
+    <div
+      id="bar-chart"
+      style="width: 1000px; height: 500px; background: orange"
+    ></div>
+    <br />
+    <div
+      id="histogram-chart"
+      style="width: 1000px; height: 500px; background-color: yellow"
+    ></div>
+    <br />
+
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.2.2/dist/echarts.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script type="text/javascript">
+      var chartDom = document.getElementById("wave-chart");
+      var waveChart = echarts.init(chartDom);
+
+      // Aquí es donde deberías construir tus gráficas con los datos proporcionados
+      var waveData = [];
+      var barData = [];
+      var histogramData = [];
+
+      // Construir gráfica de ola
+      var waveOption = {
+        xAxis: {
+          type: "category",
+          data: waveData.map((t) => new Date(t.timestamp)),
+        },
+        yAxis: {
+          type: "value",
+        },
+        series: [
+          {
+            data: waveData.map((t) => t.value),
+            type: "line",
+            smooth: true,
+          },
+        ],
+      };
+      
+      waveChart.setOption(waveOption);
+
+      // Construir gráfica de barras
+      var barChart = echarts.init(document.getElementById("bar-chart"));
+      var option = {
+        xAxis: {
+          type: "category",
+          data: [
+            "5 min",
+            "10 min",
+            "15 min",
+            "20 min",
+            "25 min",
+            "30 min",
+            "35 min",
+            "40 min",
+            "45 min",
+            "50 min",
+          ],
+        },
+        yAxis: {
+          type: "value",
+        },
+        series: [
+          {
+            data: barData,
+            type: "bar",
+            smooth: true,
+          },
+        ],
+      };
+      barChart.setOption(option);
+
+      // Construir histograma de la gráfica de ola
+      var histogramChart = echarts.init(
+        document.getElementById("histogram-chart")
+      );
+      var option = {
+        xAxis: {
+          type: "value",
+        },
+        yAxis: {
+          type: "value",
+        },
+        series: [
+          {
+            data: histogramData,
+            type: "histogram",
+          },
+        ],
+      };
+      histogramChart.setOption(option);
+
+      const socket = io.connect("http://localhost:3000");
+
+      socket.on("connect", () => {
+        console.log("socket conectado");
+      });
+
+      socket.on("data", function (data) {
+        console.log(data);
+        waveData.push(data);
+        waveOption = {
+        xAxis: {
+          type: "category",
+          data: waveData.map((t) => new Date(t.timestamp).toLocaleString()),
+        },
+        yAxis: {
+          type: "value",
+        },
+        series: [
+          {
+            data: waveData.map((t) => t.value),
+            type: "line",
+            smooth: true,
+          },
+        ],
+      };
+        waveChart.setOption(waveOption);
+        // if (data.nodeId == 2) {
+        //   darwLine1(data.value);
+        //   cgauge.value = data.value;
+        //   cgauge.grow();
+        // }
+        // if (data.nodeId == 3) darwLine2(data.value);
+        // if (data.value > 190 && flag && data.nodeId == 2) {
+        //   flag = false;
+        //   data_table = table.getData();
+        //   data_table.push({ t: data.timestamp, v: data.value, a: "valor muy alto" });
+        //   table.setData(data_table);
+        //   audio = document.getElementById("audio");
+        //   audio.play();
+        // } else if (flag == false && data.value < 190) {
+        //   flag = true;
+        // }
+      });
+    </script>
+  </body>
+</html>
