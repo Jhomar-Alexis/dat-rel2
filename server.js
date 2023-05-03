@@ -48,14 +48,7 @@ async function readKepwareData() {
 
     const pathToTags = `ns=2;s=${groupName}`;
 
-    // const maxAge = 0;
-    // const nodeToRead = {
-    //   nodeId: pathToTags,
-    //   attributeId: AttributeIds.Value,
-    // };
-    // const dataValue = await session.read(nodeToRead, maxAge);
-    // console.log(" value ", dataValue.toString());
-
+    //crear la subscription
     const subscription = await session.createSubscription2({
       requestedPublishingInterval: 1000,
       requestedLifetimeCount: 200,
@@ -106,8 +99,6 @@ async function readKepwareData() {
   } catch (err) {
     console.error(err);
   } finally {
-    // await session.close();
-    // await client.disconnect();
   }
 }
 
@@ -118,16 +109,7 @@ app.set("view engine", "ejs");
 app.use(express.static("public"));
 
 app.get("/", (req, res) => {
-  //const waveData = [10, 20, 30, 40, 50];
-  //const barData = [5, 10, 15, 20, 25];
-  //const histogramData = [10, 30, 50, 70, 90];
-  //res.render("index", {
-  //waveData, barData, histogramData
-  //});
   res.render("index", {
-    waveData: JSON.stringify(sinewaveData),
-    barData: JSON.stringify(barData),
-    //histogramData: JSON.stringify(histogramData),
   });
 });
 
