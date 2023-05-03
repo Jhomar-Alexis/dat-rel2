@@ -18,7 +18,7 @@
       DATOS EN TIEMPO REAL
     </h1>
     <div
-      id="wave-chart"
+      id="lineal-chart"
       style="width: 1000px; height: 500px; background: greenyellow"
     ></div>
     <br />
@@ -29,7 +29,7 @@
     <br />
     <div
       id="histogram-chart"
-      style= "width: 1000px; height: 500px; background-color: yellow"
+      style="width: 1000px; height: 500px; background-color: yellow"
     ></div>
     <br />
 
@@ -37,15 +37,14 @@
     <script src="/socket.io/socket.io.js"></script>
 
     <script type="text/javascript">
-      var chartDom = document.getElementById("wave-chart");
-      var waveChart = echarts.init(chartDom);
-      var chartDom = document.getElementById("bar-chart");
-      var barChart = echarts.init(chartDom);
-      var chartDom = document.getElementById("histogram-chart");
-      var histogramChart = echarts.init(chartDom);
+      var linealChart = echarts.init(document.getElementById("lineal-chart"));
+      var barChart = echarts.init(document.getElementById("bar-chart"));
+      var histogramChart = echarts.init(
+        document.getElementById("histogram-chart")
+      );
 
       // Aquí es donde deberías construir tus gráficas con los datos proporcionados
-      var waveData = [];
+      var linealData = [];
       var barData = [];
       var histogramData = [];
 
@@ -57,9 +56,47 @@
 
       //GRAFICA DE OLA
       socket.on("data", function (data) {
-        waveData.push(data);
-        histogramData.push(data.value);
-        updateHistogram();
+        const dt = { ...data, value: data.value.toFixed(2) };
+
+        //lineal
+        updateLinealChart(dt);
+
+        //barras
+        updatedBarChart(dt);
+
+        //histograma
+        updateHistogram(dt);
+      });
+
+      function updateLinealChart(data) {
+        if (linealData.length % 100 === 0) {
+          linealData = linealData.slice(-80);
+        }
+        linealData.push(data);
+        const LinealOption = {
+          xAxis: {
+            type: "category",
+            data: linealData.map((t) => new Date(t.timestamp).toLocaleString()),
+          },
+          yAxis: {
+            type: "value",
+          },
+          series: [
+            {
+              data: linealData.map((t) => t.value),
+              type: "line",
+              smooth: true,
+            },
+          ],
+          tooltip: {
+            show: true,
+            trigger: "axis",
+          },
+        };
+        linealChart.setOption(LinealOption);
+      }
+
+      function updatedBarChart(data) {
         const tiempo = new Date(data.timestamp);
         if (tiempo.getMinutes() % 2 === 0) {
           const index = barData.findIndex(
@@ -69,32 +106,7 @@
             barData[index].value = data.value;
           } else barData.push(data);
         }
-        if (waveData.length % 100 === 0) {
-          waveData = waveData.slice(-80);
-        }
-
-        updatedChart();
-        waveOption = {
-          xAxis: {
-            type: "category",
-            data: waveData.map((t) => new Date(t.timestamp).toLocaleString()),
-          },
-          yAxis: {
-            type: "value",
-          },
-          series: [
-            {
-              data: waveData.map((t) => t.value),
-              type: "line",
-              smooth: true,
-            },
-          ],
-        };
-        waveChart.setOption(waveOption);
-      });
-
-      function updatedChart() {
-        barOption = {
+        const barOption = {
           xAxis: {
             type: "category",
             data: barData.map((t) => new Date(t.timestamp).toLocaleString()),
@@ -107,41 +119,28 @@
               data: barData.map((t) => t.value),
               type: "bar",
               smooth: true,
+              label: {
+                show: true,
+                position: "top",
+              },
             },
           ],
+          tooltip: {
+            show: true,
+            trigger: "axis",
+          },
         };
         barChart.setOption(barOption);
       }
 
-      histogramOption = {
-        xAxis: {
-          type: "category",
-          data: [],
-        },
-        yAxis: {
-          type: "value",
-        },
-        series: [
-          {
-            name: "Histograma de onda",
-            type: "bar",
-            data: [],
-            barwidth:"800",
-            itemStyle: {},
-          },
-        ],
-      };
-
-      histogramChart.setOption(histogramOption);
-
-      function updateHistogram() {
-        var bins = 30; // number of bins
+      function updateHistogram(data) {
+        histogramData.push(data.value);
+        var bins = 10;
         var min = Math.min(...histogramData);
         var max = Math.max(...histogramData);
         var binSize = (max - min) / bins;
         var histogram = new Array(bins).fill(0);
 
-        // Calculate histogram data
         for (var i = 0; i < histogramData.length; i++) {
           var binIndex = Math.floor((histogramData[i] - min) / binSize);
           if (binIndex >= bins) {
@@ -155,17 +154,44 @@
         for (var i = 0; i < bins; i++) {
           yAxisData.push(
             (min + i * binSize).toFixed(2) +
-              "-" +
+              ";" +
               (min + (i + 1) * binSize).toFixed(2)
           );
           seriesData.push(histogram[i]);
         }
 
-        histogramOption.xAxis.data = yAxisData;
-        histogramOption.series[0].data = seriesData;
+        const histogramOption = {
+          xAxis: {
+            type: "category",
+            axisLabel: {
+              rotate: -60,
+            },
+            data: yAxisData,
+          },
+          yAxis: {
+            type: "value",
+          },
+          series: [
+            {
+              name: "Histograma",
+              type: "bar",
+              data: seriesData.sort((a, b) => b - a),
+              label: {
+                show: true,
+                position: "top",
+              },
+            },
+          ],
+          grid: {
+            bottom: "20%",
+          },
+          tooltip: {
+            show: true,
+            trigger: "axis",
+          },
+        };
         histogramChart.setOption(histogramOption);
       }
- // update histogram every 2 seconds
     </script>
   </body>
 </html>
