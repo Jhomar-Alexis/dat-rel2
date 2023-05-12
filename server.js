@@ -9,13 +9,19 @@ const {
 const express = require("express");
 const app = express();
 const http = require("http");
-const server = http.createServer(app);
-const socketIo = require("socket.io");
-const io = socketIo(server);
+const appServer = http.createServer(app);
+const {Server} = require("socket.io");
+const io = new Server(appServer, {
+  cors: {
+    origin: '*'
+  }
+});
 const ejs = require("ejs");
+const { string } = require("yargs");
+var cors = require('cors')
 
 const endpointUrl = "opc.tcp://localhost:49320";
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 async function readKepwareData() {
   let session, client;
@@ -105,15 +111,15 @@ async function readKepwareData() {
 readKepwareData();
 
 // Configurar servidor web para servir la página HTML y los archivos JavaScript
-app.set("view engine", "ejs");
-app.use(express.static("public"));
+// app.set("views engine", "ejs");
+// app.use(express.static("public"));
+app.use(cors({origin:'*'}))
 
 app.get("/", (req, res) => {
-  res.render("index", {
-  });
+  res.send("conectado")
 });
 
 // Iniciar servidor web
-server.listen(port, () => {
+appServer.listen(port, () => {
   console.log(`Servidor web iniciado en el puerto ${port}`);
 });
